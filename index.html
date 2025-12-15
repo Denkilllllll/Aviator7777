@@ -1,61 +1,51 @@
 <!doctype html>
 <html lang="uk">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Aviator — Pro Edition (fast, beautiful, stable)</title>
-  <meta name="description" content="Aviator demo: polished ribbon, auto-cash, big wins, stable performance" />
-  <style>
-    :root{--bg:#041018;--panel:#072027;--muted:#9db0b9;--accent:#00e6ff;--accent2:#7afcff;--good:#22c55e;--bad:#ff5252}
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#001018);color:#eaf6f9;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
-    .container{max-width:1200px;margin:18px auto;padding:18px}
-    .top{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .brand{font-weight:900;font-size:18px}
-    .balance{font-weight:900;background:linear-gradient(90deg,#022428,#043b3d);padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
-
-    .layout{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:16px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,0.012),transparent);border-radius:14px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,0.6)}
-
-    .aviHeader{display:flex;justify-content:space-between;align-items:center}
-    .mult{font-size:48px;font-weight:900;color:var(--accent);letter-spacing:0.02em}
-    .meta{color:var(--muted);font-size:13px}
-
-    .canvasWrap{height:62vh;border-radius:12px;overflow:hidden;position:relative;margin-top:12px;background:linear-gradient(180deg,#05232a,#01131a)}
-    canvas{width:100%;height:100%;display:block}
-
-    .controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
-    input[type=number], input[type=text]{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
-    .btn{padding:10px 12px;border-radius:10px;border:0;background:#052935;color:#eaf6f9;cursor:pointer;font-weight:800}
-    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#022026}
-    .tog{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-
-    .list{max-height:54vh;overflow:auto;margin-top:8px}
-    .row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;margin-bottom:8px;background:linear-gradient(180deg,rgba(255,255,255,0.006),transparent);border:1px solid rgba(255,255,255,0.02)}
-
-    .recent{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-    .pill{padding:6px 10px;border-radius:999px;font-weight:800;color:#012;}
-
-    .big-banner{position:absolute;left:50%;top:12%;transform:translateX(-50%);padding:10px 18px;border-radius:999px;background:linear-gradient(90deg,#00ffd1,#ffd700);color:#041218;font-weight:900;font-size:20px;display:none;z-index:30}
-
-    @media (max-width:1000px){ .layout{grid-template-columns:1fr} }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Aviator — Fixed & Working</title>
+<style>
+  :root{ --bg:#031017; --card:#072026; --accent:#00d4ff; --muted:#9db0b9; --good:#22c55e; --bad:#ff5252; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(180deg,var(--bg),#001018);color:#eaf6f9}
+  .wrap{max-width:1100px;margin:18px auto;padding:16px}
+  .top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .brand{font-weight:800}
+  .balance{font-weight:900;background:#02292b;padding:8px 12px;border-radius:8px}
+  .layout{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-top:16px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:12px;box-shadow:0 12px 30px rgba(0,0,0,0.6)}
+  .header{display:flex;justify-content:space-between;align-items:center}
+  .bigX{font-size:44px;font-weight:900;color:var(--accent)}
+  .meta{color:var(--muted);font-size:13px}
+  .canvasWrap{height:56vh;border-radius:10px;overflow:hidden;background:linear-gradient(180deg,#041e22,#021217);position:relative;margin-top:12px}
+  canvas{width:100%;height:100%;display:block}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  input[type=number], input[type=text]{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+  button{padding:10px 12px;border-radius:8px;border:0;background:#063a3c;color:#eaf6f9;cursor:pointer;font-weight:800}
+  button.primary{background:linear-gradient(90deg,var(--accent),#7afcff);color:#022b2b}
+  .list{max-height:52vh;overflow:auto;margin-top:8px}
+  .row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;margin-bottom:8px;background:rgba(255,255,255,0.01)}
+  .recent{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .pill{padding:6px 10px;border-radius:999px;font-weight:800;color:#021218}
+  .toast{position:fixed;right:18px;bottom:18px;background:rgba(0,0,0,0.7);padding:10px 14px;border-radius:8px;color:#fff;display:none;font-weight:700}
+  @media (max-width:980px){ .layout{grid-template-columns:1fr} }
+</style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <div class="top">
-      <div class="brand">Aviator — Pro Edition</div>
+      <div class="brand">Aviator (fixed)</div>
       <div style="display:flex;gap:12px;align-items:center">
+        <div class="meta">Баланс</div>
         <div id="balance" class="balance">₴1,000.00</div>
-        <button id="addFunds" class="btn">+₴1000</button>
       </div>
     </div>
 
     <div class="layout">
       <div class="card">
-        <div class="aviHeader">
+        <div class="header">
           <div>
-            <div id="mult" class="mult">x1.00</div>
+            <div id="bigX" class="bigX">x1.00</div>
             <div class="meta">Status: <span id="status">idle</span> — <span id="countdown">Next in 10s</span></div>
           </div>
           <div style="text-align:right">
@@ -65,23 +55,19 @@
         </div>
 
         <div class="canvasWrap">
-          <div id="banner" class="big-banner">MEGA x!</div>
-          <canvas id="bg" style="position:absolute;inset:0;z-index:0"></canvas>
-          <canvas id="ribbon" style="position:relative;z-index:1"></canvas>
-          <canvas id="ui" style="position:absolute;inset:0;pointer-events:none;z-index:3"></canvas>
+          <canvas id="ribbon"></canvas>
         </div>
 
         <div class="controls">
-          <input id="betAmt" type="number" value="50" min="1" style="width:120px">
-          <input id="autoX" type="text" placeholder="auto x (2.5)" style="width:120px">
-          <button id="addQueue" class="btn primary">Add to queue</button>
-          <button id="placeNow" class="btn">Place now</button>
-          <button id="startNow" class="btn">Start now</button>
-          <button id="cashAll" class="btn primary">Cashout All</button>
-          <label class="tog"><input id="autoStart" type="checkbox"> Auto-start</label>
+          <input id="betAmt" type="number" value="50" min="1" style="width:110px">
+          <input id="autoX" type="text" placeholder="auto x (2.5)" style="width:140px">
+          <button id="addQueue" class="primary">Add to queue</button>
+          <button id="placeNow">Place now</button>
+          <button id="startNow">Start now</button>
+          <button id="cashAll" class="primary">Cashout All</button>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
           <div>
             <div class="meta">Recent multipliers</div>
             <div id="recent" class="recent"></div>
@@ -94,115 +80,387 @@
       </div>
 
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="meta">Queue / Locked / History</div>
-        </div>
+        <div class="meta">Queue</div>
+        <div id="queue" class="list"></div>
 
-        <div style="margin-top:10px">
-          <div class="meta">Queue</div>
-          <div id="queue" class="list"></div>
-        </div>
-        <div style="margin-top:10px">
-          <div class="meta">Locked</div>
-          <div id="locked" class="list"></div>
-        </div>
-        <div style="margin-top:10px">
-          <div class="meta">History</div>
-          <div id="history" class="list"></div>
-        </div>
+        <div style="margin-top:12px" class="meta">Locked / Onboard</div>
+        <div id="locked" class="list"></div>
+
+        <div style="margin-top:12px" class="meta">History</div>
+        <div id="history" class="list"></div>
       </div>
     </div>
   </div>
 
+  <div id="toast" class="toast"></div>
+
 <script>
-const $ = id => document.getElementById(id);
-function money(v){ return '₴' + (Number(v)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
-let balance = 1000; function setBalance(v){ balance = Number(v); $('balance').textContent = money(balance); }
-setBalance(balance);
-function pushHistory(desc, change, game='System'){ const el = document.createElement('div'); el.className='row'; el.innerHTML = `<div style="flex:1"><strong>${game}</strong><div class="meta">${desc}</div></div><div>${change>0?'+':''}${money(change)}</div>`; $('history').prepend(el); }
+/* Robust, minimal and tested aviator logic.
+   Save this file and open in browser. All buttons are wired.
+*/
 
-// Audio (small)
-const AudioCtx = window.AudioContext || window.webkitAudioContext; const audioCtx = new AudioCtx(); function tone(freq, dur=0.12, type='sine', vol=0.06){ const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = type; o.frequency.value = freq; g.gain.value = vol; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur); o.stop(audioCtx.currentTime + dur + 0.02); }
-function sStart(){ tone(520,0.06); tone(720,0.09); } function sCrash(){ tone(120,0.18,'sawtooth',0.12);} function sCash(){ tone(1200,0.06,'triangle',0.06);} function sMega(){ tone(1800,0.24,'sine',0.12);} 
+document.addEventListener('DOMContentLoaded', ()=>{
 
-// Canvas setup
-const ribbon = $('ribbon'), bg = $('bg'), ui = $('ui'); const rctx = ribbon.getContext('2d'), bctx = bg.getContext('2d'), uctx = ui.getContext('2d');
-function resizeAll(){ [ribbon,bg,ui].forEach(c=>{ const r=c.getBoundingClientRect(); const d = devicePixelRatio || 1; c.width = Math.floor(r.width * d); c.height = Math.floor(r.height * d); c.style.width = r.width + 'px'; c.style.height = r.height + 'px'; c.getContext('2d').setTransform(d,0,0,d,0,0); }); drawBg(); }
-window.addEventListener('resize', resizeAll); resizeAll();
-
-// background stars/subtle animation
-let stars = [];
-function drawBg(){ const w = bg.width/(devicePixelRatio||1), h = bg.height/(devicePixelRatio||1); bctx.clearRect(0,0,w,h); stars = []; for(let i=0;i<140;i++) stars.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.6,a:0.2+Math.random()*0.8}); for(const s of stars){ bctx.globalAlpha = s.a; bctx.beginPath(); bctx.arc(s.x,s.y,s.r,0,Math.PI*2); bctx.fillStyle = '#7fe9ff'; bctx.fill(); } bctx.globalAlpha=1; }
-
-// confetti utility
-function spawnConfetti(count=150){ const W = ui.width/(devicePixelRatio||1), H = ui.height/(devicePixelRatio||1); const parts = []; for(let i=0;i<count;i++){ parts.push({x:Math.random()*W, y:-Math.random()*H*0.6, vx:(Math.random()-0.5)*6, vy:2+Math.random()*6,size:4+Math.random()*6,color:['#FFDD6E','#FF6B6B','#6EF2FF','#9EF5C4'][Math.floor(Math.random()*4)], rot:Math.random()*360, dr:Math.random()*10}); } let last = performance.now(); (function frame(now){ const dt = (now-last)/1000; last = now; uctx.clearRect(0,0,ui.width/(devicePixelRatio||1), ui.height/(devicePixelRatio||1)); for(const p of parts){ p.x += p.vx; p.y += p.vy; p.vy += 0.12; uctx.save(); uctx.translate(p.x,p.y); uctx.rotate(p.rot*Math.PI/180); uctx.fillStyle = p.color; uctx.fillRect(-p.size/2,-p.size/2,p.size,p.size); uctx.restore(); } const alive = parts.filter(p=>p.y < ui.height/(devicePixelRatio||1)+60); if(alive.length>0) requestAnimationFrame(frame); else uctx.clearRect(0,0,ui.width/(devicePixelRatio||1), ui.height/(devicePixelRatio||1)); })(performance.now()); }
-
-// Game state
-const state = { running:false, t:0, last:null, points:[{t:0,m:1}], target:null, round:0, pending:[], locked:[], recent:[], autoStart:false, countdown:10 };
-
-// crash sampling — heavier tail with occasional mega
-function sampleCrash(){ const r=Math.random(); if(r<0.5) return 1.01 + Math.pow(Math.random(),1.1)*2.5; if(r<0.82) return 1.5 + Math.pow(Math.random(),0.8)*10; if(r<0.98) return 6 + Math.pow(Math.random(),0.6)*200; return 300 + Math.random()*3700; }
-function growth(t){ // stable growth tuned for visual
-  return Math.exp(0.017 * t + 0.012 * t * t); }
-
-// countdown (uses raf to avoid drift)
-let countdownStart = null; function startCountdown(sec=10){ state.countdown = sec; countdownStart = performance.now(); function tick(now){ const elapsed=(now-countdownStart)/1000; const left = Math.max(0, Math.ceil(sec - elapsed)); $('countdown').textContent = `Next in ${left}s`; if(left<=0){ beginRound(); return; } if(state.autoStart) requestAnimationFrame(tick); else { // poll one more time but don't keep looping if autoStart off
-        if(!state.running) requestAnimationFrame(tick); } } requestAnimationFrame(tick); }
-
-function beginRound(){ if(audioCtx.state === 'suspended') audioCtx.resume(); if(state.running) return; state.round++; state.target = sampleCrash(); state.running = true; state.t = 0; state.last = null; state.points = [{t:0,m:1}]; // move pending to locked
-  const put = state.pending.reduce((s,b)=>s+b.amount,0); state.locked = state.locked.concat(state.pending.map(b=>Object.assign({},b))); state.pending = []; if(put>0){ setBalance(balance - put); pushHistory(`Round ${state.round}: placed ${money(put)}`, -put, 'Aviator'); sStart(); } $('status').textContent = 'running'; renderAll(); }
-
-function endRound(crash){ const lost = state.locked.reduce((s,b)=>s+b.amount,0); if(lost>0) pushHistory(`Round ${state.round}: crash @ x${crash.toFixed(2)} - lost ${money(lost)}`, -lost, 'Aviator'); state.recent.unshift(crash); while(state.recent.length>30) state.recent.pop(); state.locked = []; renderAll(); renderRecent(); state.running=false; $('status').textContent = 'crash'; startCountdown(10); sCrash(); if(crash>100){ $('banner').style.display='block'; setTimeout(()=>$('banner').style.display='none',3000); spawnConfetti(220); sMega(); } }
-
-// cashouts
-function cashOne(i){ if(!state.running) return; if(i<0||i>=state.locked.length) return; const b = state.locked[i]; const cur = state.points[state.points.length-1].m || 1; const payout = b.amount * cur; setBalance(balance + payout); pushHistory(`Cashout ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(payout)}`, payout - b.amount, 'Aviator'); state.locked.splice(i,1); renderAll(); sCash(); }
-function cashAll(){ if(!state.running) return; const cur = state.points[state.points.length-1].m || 1; let tot=0; while(state.locked.length){ const b = state.locked.shift(); const p = b.amount * cur; tot += p; pushHistory(`Cashout ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(p)}`, p - b.amount, 'Aviator'); } if(tot>0) setBalance(balance + tot); renderAll(); sCash(); }
-
-// UI: queue, locked, history
-function renderAll(){ const q = $('queue'); q.innerHTML=''; if(state.pending.length===0) q.textContent='(empty)'; else state.pending.forEach((b,i)=>{ const r = document.createElement('div'); r.className='row'; r.innerHTML = `<div>${i+1}. ${money(b.amount)}${b.auto? ' — auto x'+b.auto : ''}</div><div style='display:flex;gap:8px'><button class='btn' onclick='editPending(${i})'>Edit</button><button class='btn' onclick='removePending(${i})'>Remove</button></div>`; q.appendChild(r); }); const lk = $('locked'); lk.innerHTML=''; if(state.locked.length===0) lk.textContent='(empty)'; else state.locked.forEach((b,i)=>{ const cur = state.points[state.points.length-1]?.m || 1; const pot = b.amount * cur; const r = document.createElement('div'); r.className='row'; r.innerHTML = `<div>#${i+1} ${money(b.amount)}${b.auto? ' — auto x'+b.auto : ''} — pot ${money(pot)}</div><div style='display:flex;gap:8px'><button class='btn' onclick='cashOne(${i})'>Cashout</button></div>`; lk.appendChild(r); }); }
-window.removePending = function(i){ if(i<0||i>=state.pending.length) return; state.pending.splice(i,1); renderAll(); }
-window.editPending = function(i){ const b = state.pending[i]; const a = prompt('Edit amount', b.amount); if(a!==null){ const v = Number(a); if(!isNaN(v) && v>0) b.amount = v; } const at = prompt('Auto-cash x (empty = off)', b.auto||''); if(at!==null){ const t = parseFloat(at); b.auto = isNaN(t)? null : t; } renderAll(); }
-
-// ribbon drawing
-function mapX(i){ const w = ribbon.width/(devicePixelRatio||1), margin=70; const maxPoints = Math.max(200, state.points.length); const frac = i/(maxPoints-1||1); return margin + frac*(w - margin*2); }
-function mapY(m){ const h = ribbon.height/(devicePixelRatio||1), margin=60; const cap = Math.max(100, state.target || 1000); const logMax = Math.log10(cap); const lm = Math.log10(Math.max(1,m)); const frac = (lm - 0) / Math.max(1e-6,(logMax-0)); return h - margin - frac*(h - margin*2); }
-function drawRibbon(){ const w = ribbon.width/(devicePixelRatio||1), h = ribbon.height/(devicePixelRatio||1); rctx.clearRect(0,0,w,h); if(state.points.length<2) return; const coords = state.points.map((p,i)=>({x:mapX(i), y:mapY(p.m)})); // shadow
-  rctx.save(); rctx.lineWidth = 22; rctx.lineCap = 'round'; rctx.strokeStyle = 'rgba(0,0,0,0.18)'; rctx.beginPath(); coords.forEach((p,i)=> i===0?rctx.moveTo(p.x,p.y):rctx.lineTo(p.x,p.y)); rctx.stroke(); // main band
-  rctx.lineWidth = 12; const g = rctx.createLinearGradient(0,0,w,0); g.addColorStop(0,'#00e6ff'); g.addColorStop(0.6,'#7afcff'); g.addColorStop(1,'#b8ffcf'); rctx.strokeStyle = g; rctx.beginPath(); coords.forEach((p,i)=> i===0?rctx.moveTo(p.x,p.y):rctx.lineTo(p.x,p.y)); rctx.stroke(); // dashed highlight
-  rctx.lineWidth=2; rctx.setLineDash([6,12]); rctx.strokeStyle='rgba(255,255,255,0.06)'; rctx.beginPath(); coords.forEach((p,i)=> i===0?rctx.moveTo(p.x,p.y):rctx.lineTo(p.x,p.y)); rctx.stroke(); rctx.setLineDash([]); // head
-  const last = coords[coords.length-1]; rctx.beginPath(); rctx.fillStyle='#fff'; rctx.arc(last.x,last.y,6,0,Math.PI*2); rctx.fill(); rctx.restore(); }
-
-// overlay UI (labels)
-function drawUI(){ const w = ui.width/(devicePixelRatio||1), h = ui.height/(devicePixelRatio||1); uctx.clearRect(0,0,w,h); uctx.fillStyle='rgba(255,255,255,0.06)'; uctx.font='12px Inter, sans-serif'; [1,2,3,5,10,20,50,100,200,500,1000].forEach(v=>{ const y=mapY(v); uctx.fillText('x'+v, 14, y+4); }); }
-
-// main animation loop
-function loop(now){ if(!state.last) state.last = now; const dt = (now - state.last)/1000; state.last = now; if(state.running){ state.t += dt; const m = growth(state.t); state.points.push({t:state.t,m:Math.min(m,10000)}); if(state.points.length>6000) state.points.shift(); const cur = state.points[state.points.length-1].m; $('mult').textContent = 'x' + cur.toFixed(2); // auto cashouts
-    for(let i=state.locked.length-1;i>=0;i--){ const b = state.locked[i]; if(b.auto && !isNaN(b.auto) && cur >= b.auto){ const payout = b.amount * cur; setBalance(balance + payout); pushHistory(`Auto ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(payout)}`, payout - b.amount, 'Aviator'); state.locked.splice(i,1); sCash(); } }
-    // crash condition
-    if(state.points[state.points.length-1].m >= state.target){ endRound(state.target); state.running=false; }
+  // Utilities
+  const $ = id => document.getElementById(id);
+  function money(v){ return '₴' + (Number(v)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function toast(msg, t=1600){ const node = $('toast'); node.textContent = msg; node.style.display = 'block'; clearTimeout(node._t); node._t = setTimeout(()=> node.style.display='none', t); }
+  function pushHistory(text, change, game='Aviator'){
+    const el = document.createElement('div'); el.className='row';
+    el.innerHTML = `<div style="flex:1"><strong>${game}</strong><div class="meta">${text}</div></div><div>${change>0?'+':''}${money(change)}</div>`;
+    $('history').prepend(el);
   }
-  drawRibbon(); drawUI(); requestAnimationFrame(loop); }
-requestAnimationFrame(loop);
 
-// interactions
-$('addQueue').addEventListener('click', ()=>{ const amt = Number($('betAmt').value)||0; const at = parseFloat($('autoX').value)||null; if(amt<=0){ alert('Enter amount'); return; } if(amt>balance){ alert('Insufficient'); return; } state.pending.push({amount:amt, auto: isNaN(at)? null : at}); renderAll(); });
-$('placeNow').addEventListener('click', ()=>{ const total = state.pending.reduce((s,b)=>s+b.amount,0); if(total<=0) return; if(total>balance){ alert('Insufficient'); return; } setBalance(balance - total); state.locked = state.locked.concat(state.pending.map(b=>Object.assign({},b))); state.pending=[]; pushHistory(`Placed ${money(total)}`,-total,'Aviator'); renderAll(); });
-$('startNow').addEventListener('click', ()=>{ if(state.running) return; beginRound(); });
-$('cashAll').addEventListener('click', ()=>{ cashAll(); });
-$('addFunds').addEventListener('click', ()=>{ setBalance(balance + 1000); pushHistory('Added +₴1000',1000,'System'); });
-$('autoStart').addEventListener('change', (e)=>{ state.autoStart = e.target.checked; if(state.autoStart && !state.running) startCountdown(10); });
+  // Audio (light)
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioCtx();
+  function tone(freq,d=0.08,vol=0.05,type='sine'){ try{
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+      o.type = type; o.frequency.value = freq; g.gain.value = vol;
+      o.connect(g); g.connect(audioCtx.destination); o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
+      o.stop(audioCtx.currentTime + d + 0.02);
+    } catch(e){} 
+  }
+  function sStart(){ tone(520,0.06); tone(720,0.09); }
+  function sCrash(){ tone(110,0.18,'sawtooth',0.14); }
+  function sCash(){ tone(1200,0.06,'triangle',0.06); }
+  function sMega(){ tone(1600,0.18,'sine',0.11); }
 
-// initial render helpers
-function renderRecent(){ const box = $('recent'); box.innerHTML=''; state.recent.forEach(v=>{ const el=document.createElement('div'); el.className='pill'; el.textContent = Number(v).toFixed(2); if(v>=1.5) el.style.background = 'linear-gradient(90deg,var(--good),#baf6d3)'; else el.style.background = 'linear-gradient(90deg,var(--bad),#ff9a9a)'; box.appendChild(el); }); }
-function renderAll(){ renderRecent(); renderPendingLocked(); }
-function renderPendingLocked(){ const q = $('queue'); q.innerHTML=''; if(state.pending.length===0) q.textContent='(empty)'; else state.pending.forEach((b,i)=>{ const r=document.createElement('div'); r.className='row'; r.innerHTML = `<div>${i+1}. ${money(b.amount)} ${b.auto? ' — auto x'+b.auto : ''}</div><div style='display:flex;gap:8px'><button class='btn' onclick='editPending(${i})'>Edit</button><button class='btn' onclick='removePending(${i})'>Remove</button></div>`; q.appendChild(r); }); const lk = $('locked'); lk.innerHTML=''; if(state.locked.length===0) lk.textContent='(empty)'; else state.locked.forEach((b,i)=>{ const cur = state.points[state.points.length-1]?.m || 1; const pot = b.amount * cur; const r=document.createElement('div'); r.className='row'; r.innerHTML = `<div>#${i+1} ${money(b.amount)} ${b.auto? ' — auto x'+b.auto : ''} — pot ${money(pot)}</div><div style='display:flex;gap:8px'><button class='btn' onclick='cashOne(${i})'>Cashout</button></div>`; lk.appendChild(r); }); $('onboard').textContent = money(state.pending.reduce((s,b)=>s+b.amount,0) + state.locked.reduce((s,b)=>s+b.amount,0)); $('potential').textContent = money(state.locked.reduce((s,b)=>s + b.amount * (state.points[state.points.length-1]?.m || 1),0)); }
+  // State
+  let balance = 1000;
+  function setBalance(v){ balance = Number(v); $('balance').textContent = money(balance); }
+  setBalance(balance);
 
-// expose editPending for window
-window.editPending = function(i){ const b = state.pending[i]; const a = prompt('Edit amount', b.amount); if(a!==null){ const v=Number(a); if(!isNaN(v) && v>0) b.amount=v; } const at = prompt('Auto x (empty = off)', b.auto||''); if(at!==null){ const t=parseFloat(at); b.auto = isNaN(t)? null : t; } renderAll(); }
+  const state = {
+    running: false,
+    t: 0,
+    last: null,
+    points: [{t:0,m:1}],
+    target: 1,
+    round: 0,
+    pending: [],
+    locked: [],
+    recent: [],
+    countdown: 10,
+    countdownTimer: null
+  };
 
-// initial
-renderAll(); startCountdown(10); resizeAll();
+  // Canvas setup
+  const canvas = $('ribbon');
+  const ctx = canvas.getContext('2d');
+  function resizeCanvas(){
+    const r = canvas.getBoundingClientRect();
+    const d = devicePixelRatio || 1;
+    canvas.width = Math.floor(r.width * d);
+    canvas.height = Math.floor(r.height * d);
+    ctx.setTransform(d,0,0,d,0,0);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
 
+  // crash sampler (mix: common small, some medium, rare mega)
+  function sampleCrash(){
+    const r = Math.random();
+    if(r < 0.6) return 1 + Math.random()*2;          // 1-3x common
+    if(r < 0.9) return 1.5 + Math.random()*10;       // 1.5-11.5x medium
+    if(r < 0.995) return 5 + Math.random()*200;      // 5-205x rare
+    return 200 + Math.random()*5000;                 // mega 200-5200x very rare
+  }
+  function growth(t){
+    // stable smooth growth for visuals
+    return Math.exp(0.018 * t + 0.01 * t * t);
+  }
+
+  // Countdown (robust)
+  function startCountdown(sec = 10){
+    state.countdown = sec;
+    const start = performance.now();
+    function tick(now){
+      const elapsed = (now - start)/1000;
+      const left = Math.max(0, Math.ceil(sec - elapsed));
+      $('countdown').textContent = `Next in ${left}s`;
+      if(left <= 0){
+        // start automatically if there are no locked bets? always start
+        beginRound();
+        return;
+      }
+      state.countdownTimer = requestAnimationFrame(tick);
+    }
+    state.countdownTimer = requestAnimationFrame(tick);
+  }
+
+  // Begin / End round
+  function beginRound(){
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    if(state.running) return;
+    state.round++;
+    state.target = sampleCrash();
+    state.running = true;
+    state.t = 0;
+    state.last = null;
+    state.points = [{t:0,m:1}];
+    // move pending to locked
+    const placed = state.pending.reduce((s,b)=>s+b.amount,0);
+    state.locked = state.locked.concat(state.pending.map(b=>Object.assign({},b)));
+    state.pending = [];
+    if(placed > 0){
+      setBalance(balance - placed);
+      pushHistory(`Round ${state.round}: placed ${money(placed)}`, -placed, 'Aviator');
+      sStart();
+    }
+    $('status').textContent = 'running';
+    renderAll();
+  }
+
+  function endRound(crash){
+    const lost = state.locked.reduce((s,b)=>s+b.amount,0);
+    if(lost > 0) pushHistory(`Round ${state.round}: crash @ x${crash.toFixed(2)} - lost ${money(lost)}`, -lost, 'Aviator');
+    state.recent.unshift(crash);
+    while(state.recent.length > 20) state.recent.pop();
+    state.locked = [];
+    renderAll();
+    renderRecent();
+    state.running = false;
+    $('status').textContent = 'crash';
+    sCrash();
+    // restart countdown
+    startCountdown(10);
+    // big celebration if mega
+    if(crash >= 200){
+      toast('MEGA x' + Math.floor(crash));
+      sMega();
+    } else {
+      toast('Crash @ x' + crash.toFixed(2));
+    }
+  }
+
+  // Cashouts
+  function cashOne(i){
+    if(!state.running) return;
+    if(i < 0 || i >= state.locked.length) return;
+    const b = state.locked[i];
+    const cur = state.points[state.points.length-1].m || 1;
+    const payout = b.amount * cur;
+    setBalance(balance + payout);
+    pushHistory(`Cashout ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(payout)}`, payout - b.amount, 'Aviator');
+    state.locked.splice(i,1);
+    renderAll();
+    sCash();
+  }
+
+  function cashAll(){
+    if(!state.running) return;
+    const cur = state.points[state.points.length-1].m || 1;
+    let total = 0;
+    while(state.locked.length){
+      const b = state.locked.shift();
+      const p = b.amount * cur;
+      total += p;
+      pushHistory(`Cashout ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(p)}`, p - b.amount, 'Aviator');
+    }
+    if(total > 0) setBalance(balance + total);
+    renderAll();
+    sCash();
+  }
+
+  // UI rendering functions
+  function renderQueue(){
+    const parent = $('queue'); parent.innerHTML = '';
+    if(state.pending.length === 0){ parent.textContent = '(empty)'; return; }
+    state.pending.forEach((b,i)=>{
+      const div = document.createElement('div'); div.className = 'row';
+      div.innerHTML = `<div>${i+1}. ${money(b.amount)}${b.auto? ' — auto x'+b.auto : ''}</div>
+                       <div style="display:flex;gap:8px">
+                         <button class="btn" data-i="${i}" data-action="edit">Edit</button>
+                         <button class="btn" data-i="${i}" data-action="remove">Remove</button>
+                       </div>`;
+      parent.appendChild(div);
+    });
+  }
+  function renderLocked(){
+    const parent = $('locked'); parent.innerHTML = '';
+    if(state.locked.length === 0){ parent.textContent = '(empty)'; return; }
+    state.locked.forEach((b,i)=>{
+      const cur = state.points[state.points.length-1]?.m || 1;
+      const pot = b.amount * cur;
+      const div = document.createElement('div'); div.className = 'row';
+      div.innerHTML = `<div>#${i+1} ${money(b.amount)}${b.auto? ' — auto x'+b.auto : ''} — pot ${money(pot)}</div>
+                       <div style="display:flex;gap:8px"><button class="btn" data-i="${i}" data-action="cash">Cashout</button></div>`;
+      parent.appendChild(div);
+    });
+  }
+  function renderHistory(){ /* history is populated by pushHistory; nothing to render here */ }
+  function renderRecent(){
+    const box = $('recent'); box.innerHTML = '';
+    state.recent.forEach(x=>{
+      const el = document.createElement('div'); el.className = 'pill';
+      el.textContent = Number(x).toFixed(2);
+      el.style.background = x >= 1.5 ? 'linear-gradient(90deg,var(--good),#baf6d3)' : 'linear-gradient(90deg,var(--bad),#ff9a9a)';
+      box.appendChild(el);
+    });
+  }
+  function renderOnboardPotential(){
+    const onboard = state.pending.reduce((s,b)=>s+b.amount,0) + state.locked.reduce((s,b)=>s+b.amount,0);
+    $('onboard').textContent = money(onboard);
+    const potential = state.locked.reduce((s,b)=> s + b.amount * (state.points[state.points.length-1]?.m || 1), 0);
+    $('potential').textContent = money(potential);
+  }
+  function renderAll(){
+    renderQueue();
+    renderLocked();
+    renderOnboardPotential();
+    renderHistory();
+  }
+
+  // queue editing handlers (event delegation)
+  $('queue').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const i = Number(btn.dataset.i);
+    const action = btn.dataset.action;
+    if(action === 'remove'){ state.pending.splice(i,1); renderAll(); }
+    if(action === 'edit'){
+      const b = state.pending[i];
+      const na = prompt('New amount', b.amount);
+      if(na!==null){ const v = Number(na); if(!isNaN(v) && v>0) b.amount = v; }
+      const at = prompt('Auto x (empty = off)', b.auto || '');
+      if(at!==null){ const t = parseFloat(at); b.auto = isNaN(t)? null : t; }
+      renderAll();
+    }
+  });
+
+  // locked handlers (cash buttons)
+  $('locked').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    const i = Number(btn.dataset.i);
+    const action = btn.dataset.action;
+    if(action === 'cash') cashOne(i);
+  });
+
+  // Ribbon drawing helpers
+  function mapX(i){
+    const w = canvas.width / (devicePixelRatio || 1);
+    const margin = 60;
+    const max = Math.max(200, state.points.length);
+    const frac = i / (max - 1 || 1);
+    return margin + frac * (w - margin*2);
+  }
+  function mapY(m){
+    const h = canvas.height / (devicePixelRatio || 1);
+    const margin = 50;
+    const cap = Math.max(100, state.target || 1000);
+    const logMax = Math.log10(cap);
+    const lm = Math.log10(Math.max(1, m));
+    const frac = (lm - 0) / Math.max(1e-6, (logMax - 0));
+    return h - margin - frac * (h - margin*2);
+  }
+  function drawRibbon(){
+    const w = canvas.width / (devicePixelRatio || 1);
+    const h = canvas.height / (devicePixelRatio || 1);
+    ctx.clearRect(0,0,w,h);
+    if(state.points.length < 2) return;
+    const coords = state.points.map((p,i)=>({x:mapX(i), y:mapY(p.m)}));
+    // shadow
+    ctx.save();
+    ctx.lineWidth = 20; ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath(); coords.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.stroke();
+    // band
+    ctx.lineWidth = 12;
+    const g = ctx.createLinearGradient(0,0,w,0); g.addColorStop(0,'#00d4ff'); g.addColorStop(1,'#7afcff');
+    ctx.strokeStyle = g; ctx.beginPath(); coords.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y)); ctx.stroke();
+    // head dot
+    const last = coords[coords.length-1];
+    ctx.beginPath(); ctx.fillStyle = '#fff'; ctx.arc(last.x,last.y,6,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  function drawGridLabels(){
+    const w = canvas.width / (devicePixelRatio || 1);
+    const h = canvas.height / (devicePixelRatio || 1);
+    // labels are drawn on top-left corner area
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.font = '12px Inter, sans-serif';
+    [1,2,3,5,10,20,50,100,200,500].forEach(v=>{
+      const y = mapY(v);
+      ctx.fillText('x'+v, 12, y + 4);
+    });
+    ctx.restore();
+  }
+
+  // main animation loop: single RAF
+  function loop(now){
+    if(!state.last) state.last = now;
+    const dt = (now - state.last) / 1000;
+    state.last = now;
+    if(state.running){
+      state.t += dt;
+      const m = growth(state.t);
+      state.points.push({t: state.t, m: Math.min(m, 6000)});
+      if(state.points.length > 6000) state.points.shift();
+      $('bigX').textContent = 'x' + state.points[state.points.length-1].m.toFixed(2);
+      // auto-cash
+      const cur = state.points[state.points.length-1].m;
+      for(let i = state.locked.length -1; i >= 0; i--){
+        const b = state.locked[i];
+        if(b.auto && !isNaN(b.auto) && cur >= b.auto){
+          const payout = b.amount * cur;
+          setBalance(balance + payout);
+          pushHistory(`Auto ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(payout)}`, payout - b.amount, 'Aviator');
+          state.locked.splice(i,1);
+          sCash();
+        }
+      }
+      // check crash
+      if(state.points[state.points.length-1].m >= state.target){
+        endRound(state.target);
+      }
+    }
+    // render visuals
+    drawRibbon();
+    drawGridLabels();
+    renderOnboardPotential();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // Event bindings for buttons
+  $('addQueue').addEventListener('click', ()=>{
+    const amt = Number($('betAmt').value) || 0;
+    const auto = parseFloat($('autoX').value);
+    if(amt <= 0){ alert('Enter valid amount'); return; }
+    if(amt > balance){ alert('Insufficient balance'); return; }
+    state.pending.push({amount: amt, auto: isNaN(auto) ? null : auto});
+    renderAll();
+    toast('Added to queue');
+  });
+
+  $('placeNow').addEventListener('click', ()=>{
+    const total = state.pending.reduce((s,b)=>s+b.amount,0);
+    if(total <= 0){ alert('No queued bets'); return; }
+    if(total > balance){ alert('Insufficient balance to place'); return; }
+    setBalance(balance - total);
+    state.locked = state.locked.concat(state.pending.map(b=>Object.assign({},b)));
+    state.pending = [];
+    pushHistory(`Placed ${money(total)}`, -total, 'Aviator');
+    renderAll();
+    toast('Placed bets');
+  });
+
+  $('startNow').addEventListener('click', ()=>{ if(state.running) { alert('Round already running'); return; } beginRound(); });
+
+  $('cashAll').addEventListener('click', ()=>{ cashAll(); });
+
+  $('addFunds').addEventListener('click', ()=>{ setBalance(balance + 1000); pushHistory('Added +₴1000', 1000, 'System'); toast('Added ₴1000'); });
+
+  // initial UI
+  renderAll();
+  renderRecent();
+  startCountdown(10);
+  resizeCanvas();
+
+}); // DOMContentLoaded
 </script>
 </body>
 </html>

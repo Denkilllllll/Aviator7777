@@ -1,289 +1,229 @@
-<!--
-Aviator demo (improved)
-
-How to publish on GitHub Pages quickly:
-1. Create a new GitHub repository (e.g. `aviator-ios-demo`).
-2. Add this `index.html` to the repo root (rename from Aviator_demo_ios.html -> index.html).
-3. Commit & push to `main`.
-4. In repository Settings -> Pages, set Source to `main` branch / root and save.
-5. Your demo will be available at https://<your-username>.github.io/<repo-name>/ (may take a minute).
-
-This single-file demo is optimized for iPhone (viewport/safe-area). It implements the multiplier growth curve you asked:
- - 1 → 2×: slow, controlled (tuned by `timeTo2` and `exponent`)
- - after 2×: growth becomes exponential (tuned by `postRate`)
-
-Crash time is sampled from a heavy-tail distribution and mapped to the inverse of the growth curve so that the plane "crashes" at the sampled multiplier.
--->
-
 <!doctype html>
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Aviator — iPhone demo (smooth accelerate)</title>
-  <meta name="description" content="Авіатор демо: повільний ріст 1→2×, потім поступове прискорення. Готово для GitHub Pages." />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aviator — Premium: Ribbon, Hot x, Big Wins</title>
   <style>
-    :root{--bg1:#021021;--bg2:#001022;--accent:#ffcf6b;--accent2:#ff6b9a;--card:#071426;--glass:rgba(255,255,255,0.03);--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom)}
-    html,body{height:100%;margin:0;font-family:Inter, -apple-system, system-ui, "Helvetica Neue", Arial;color:#e6f3ff;background:linear-gradient(180deg,var(--bg1),var(--bg2));-webkit-font-smoothing:antialiased}
-    .app{max-width:420px;margin:0 auto;padding:calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));box-sizing:border-box}
-    header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-    .logo{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),var(--accent2));font-weight:700;color:#021021}
-    h1{font-size:18px;margin:0}
-    .muted{font-size:13px;color:#bcd6f5;opacity:0.8}
+    :root{
+      --bg:#03131a; --panel:#071a20; --muted:#9ab0bb; --accent:#00e0ff; --accent-2:#7afcff; --good:#22c55e; --bad:#ff5252;
+      --glass: rgba(255,255,255,0.03);
+      --card-shadow: 0 18px 50px rgba(2,10,18,0.7);
+      --radius:14px;
+      --btn-min:110px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#001018);color:#e6eef6;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
 
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:12px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+    /* Top */
+    .top{height:76px;display:flex;align-items:center;justify-content:space-between;padding:10px 28px;border-bottom:1px solid rgba(255,255,255,0.02)}
+    .brand{font-weight:900;letter-spacing:0.6px}
+    .controls{display:flex;gap:12px;align-items:center}
+    .balance{font-weight:900;background:linear-gradient(90deg,#02121a,#06242a);padding:8px 12px;border-radius:10px;border:1px solid var(--glass)}
 
-    .play-area{position:relative;height:360px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#021428 0%, #001018 100%);margin-bottom:12px;border:1px solid rgba(255,255,255,0.03)}
-    .grid{position:absolute;inset:0;background-image:linear-gradient(transparent 82%, rgba(255,255,255,0.02) 82%),linear-gradient(90deg, transparent 82%, rgba(255,255,255,0.01) 82%);background-size:100% 44px,44px 100%;pointer-events:none}
-    .mult{position:absolute;top:14px;left:14px;font-weight:800;font-size:26px;color:var(--accent)}
-    .status{position:absolute;top:14px;right:14px;background:var(--glass);padding:6px 10px;border-radius:999px;font-size:13px;color:#d9eefc}
+    /* Layout */
+    .main{display:grid;grid-template-columns:1fr 420px;gap:22px;padding:20px;align-items:start}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);border-radius:var(--radius);padding:14px;box-shadow:var(--card-shadow);border:1px solid var(--glass)}
 
-    .plane-wrap{position:absolute;left:50%;bottom:12px;transform:translate(-50%, 0);will-change:transform}
-    .plane{width:86px;height:56px;filter:drop-shadow(0 8px 14px rgba(0,0,0,0.6))}
+    /* Aviator */
+    .aviator{display:flex;flex-direction:column}
+    .header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .bigX{font-size:56px;font-weight:900;color:var(--accent);text-shadow:0 8px 30px rgba(0,224,255,0.06)}
+    .meta{color:var(--muted);font-size:13px}
 
-    .controls{display:flex;gap:10px;margin-top:10px}
-    input[type=number],input[type=text],select{width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;font-size:15px}
-    label{display:block;font-size:12px;color:#9fb1d4;margin-bottom:6px}
+    .canvasWrap{height:66vh;border-radius:12px;overflow:hidden;position:relative;margin-top:12px;background:radial-gradient(circle at 10% 10%, rgba(10,30,40,0.18), transparent), linear-gradient(180deg,#071a20,#031219)}
+    canvas{width:100%;height:100%;display:block}
 
-    .row{display:flex;gap:8px}
-    .btn{flex:1;padding:12px;border-radius:12px;border:none;font-weight:800;font-size:16px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#031226}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cfe6ff}
+    .controlsRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+    .controlsRow .btn{min-width:var(--btn-min)}
 
-    .small{font-size:13px;color:#bcd6f5}
-    .history{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-    .round{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.02);font-size:13px}
+    .right{display:flex;flex-direction:column;gap:14px}
+    .input{display:flex;gap:8px;align-items:center}
+    input[type=number],input[type=text]{padding:10px;border-radius:10px;border:1px solid var(--glass);background:transparent;color:inherit}
 
-    footer{margin-top:10px;text-align:center;font-size:12px;color:#9fb1d4}
+    .list{max-height:36vh;overflow:auto;margin-top:8px}
+    .row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;margin-bottom:8px;background:linear-gradient(180deg, rgba(255,255,255,0.008), transparent);border:1px solid rgba(255,255,255,0.02)}
 
-    @media (max-width:420px){.play-area{height:300px}}
+    .recent{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{padding:6px 10px;border-radius:999px;font-weight:800;color:#041018}
+
+    /* Responsive */
+    @media (max-width:1200px){ .main{grid-template-columns:1fr} .right{width:100%} }
+
+    /* Big celebratory banner */
+    .big-banner{position:absolute;left:50%;top:10%;transform:translateX(-50%);padding:10px 18px;border-radius:999px;background:linear-gradient(90deg,#00e6ff,#8cffc6);color:#02121a;font-weight:900;font-size:20px;display:none;z-index:30}
+
+    /* toast */
+    .toast{position:fixed;right:22px;bottom:22px;background:linear-gradient(90deg,#04262b,#01323a);padding:12px 16px;border-radius:12px;color:#eafffb;font-weight:800;display:none}
+
   </style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="logo">AV</div>
-      <div>
-        <h1>Aviator — iPhone (smooth accel)</h1>
-        <div class="muted">1→2× повільно, після 2× — все швидше. Готово для GitHub Pages.</div>
-      </div>
-    </header>
-
-    <div class="card">
-      <div class="play-area" id="playArea">
-        <div class="grid"></div>
-        <div class="mult" id="mult">1.00×</div>
-        <div class="status" id="status">Готово</div>
-        <div class="plane-wrap" id="planeWrap">
-          <!-- plane SVG -->
-          <svg class="plane" viewBox="0 0 64 42" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 20c0 0 18-3 38-3s22 3 22 3l2-3-10-6-8 2-8-6-18 6-20 7z" fill="#fff" opacity="0.98" />
-            <path d="M10 26c0 0 18 6 44 6l-10-6-8 2-8-6-18 6-0 0z" fill="#ffd9b3" opacity="0.95"/>
-          </svg>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <div style="flex:1">
-          <label>Ставка (demo)</label>
-          <input id="bet" type="number" inputmode="numeric" value="100" min="1">
-        </div>
-        <div style="width:140px">
-          <label>Автокеш-аут (×)</label>
-          <input id="autoCash" type="text" placeholder="2.5">
-        </div>
-      </div>
-
-      <div class="controls">
-        <div style="flex:1;">
-          <label>Налаштування рісту (1→2 і далі)</label>
-          <div style="display:flex;gap:8px">
-            <input id="timeTo2" type="number" value="6" min="0.5" step="0.5" title="секунди до 2×">
-            <input id="exponent" type="number" value="2" min="1" max="5" step="0.1" title="вигин: >1 — повільніше спочатку">
-            <input id="postRate" type="number" value="0.18" min="0.02" step="0.01" title="експонентний темп після 2×">
-          </div>
-          <div class="small">timeTo2 — час, за який множник досягне 2×. exponent — як повільно росте 1→2 (чем більше — тим повільніше спочатку). postRate — швидкість росту після 2×.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button id="startBtn" class="btn">Старт раунду</button>
-        <button id="cashBtn" class="btn ghost">Cash out</button>
-      </div>
-
-      <div class="history" id="history"></div>
+  <div class="top">
+    <div class="brand">Aviator — Ultra (Ribbon & Hot Wins)</div>
+    <div class="controls">
+      <div class="small muted">Баланс</div>
+      <div id="balance" class="balance">₴1,000.00</div>
+      <button class="btn" id="addFunds">+₴1000</button>
+      <button class="btn" id="openRoulette">Roulette</button>
     </div>
-
-    <footer>Демо — не реальні гроші. Для розгортання: додайте index.html в GitHub repo і увімкніть Pages.</footer>
   </div>
 
-  <script>
-    // --- core parameters & UI
-    const startBtn = document.getElementById('startBtn');
-    const cashBtn = document.getElementById('cashBtn');
-    const multEl = document.getElementById('mult');
-    const statusEl = document.getElementById('status');
-    const planeWrap = document.getElementById('planeWrap');
-    const historyEl = document.getElementById('history');
-    const betInput = document.getElementById('bet');
-    const autoInput = document.getElementById('autoCash');
+  <div class="main">
+    <div class="aviator card">
+      <div class="header">
+        <div>
+          <div id="bigX" class="bigX">x1.00</div>
+          <div class="meta">Status: <span id="status">idle</span> — <span id="countdown">Next in 10s</span></div>
+        </div>
+        <div style="text-align:right">
+          <div class="meta">Onboard</div>
+          <div id="onboard" style="font-weight:900">₴0.00</div>
+        </div>
+      </div>
 
-    const timeTo2Input = document.getElementById('timeTo2');
-    const exponentInput = document.getElementById('exponent');
-    const postRateInput = document.getElementById('postRate');
+      <div class="canvasWrap">
+        <div id="celebrate" class="big-banner">MEGA x!</div>
+        <canvas id="bgStars" style="position:absolute;inset:0;z-index:0"></canvas>
+        <canvas id="ribbon" style="position:relative;z-index:1"></canvas>
+        <canvas id="ui" style="position:absolute;inset:0;pointer-events:none;z-index:4"></canvas>
+      </div>
 
-    let running = false;
-    let startTime = 0;
-    let rafId = null;
-    let crashMultiplier = 1;
-    let crashTime = 0;
-    let cashedOut = false;
+      <div class="controlsRow">
+        <div class="input"><input id="betAmt" type="number" value="50" min="1" style="width:140px"><input id="autoX" type="text" placeholder="auto x (2.5)" style="width:140px"></div>
+        <button class="btn primary" id="addToQueue">Add to queue</button>
+        <button class="btn" id="placeNow">Place now</button>
+        <button class="btn" id="startNow">Start now</button>
+        <button class="btn primary" id="cashoutAll">Cashout All</button>
+      </div>
 
-    // --- growth curve functions
-    // piecewise multiplier m(t):
-    // if t <= a: m = 1 + (t/a)^p
-    // else: m = 2 * exp(r * (t - a))
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+        <div>
+          <div class="meta">Recent multipliers</div>
+          <div id="recent" class="recent"></div>
+        </div>
+        <div style="text-align:right">
+          <div class="meta">Potential now</div>
+          <div id="potential" style="font-weight:900">₴0.00</div>
+        </div>
+      </div>
+    </div>
 
-    function multiplierAt(t, a, p, r){
-      if (t <= a){
-        return 1 + Math.pow(t / a, p);
-      } else {
-        return 2 * Math.exp(r * (t - a));
-      }
-    }
+    <div class="right">
+      <div class="card">
+        <div class="meta">Queue (double-click to edit)</div>
+        <div id="queue" class="list"></div>
+      </div>
+      <div class="card">
+        <div class="meta">Locked / Onboard</div>
+        <div id="locked" class="list"></div>
+      </div>
+      <div class="card">
+        <div class="meta">History</div>
+        <div id="history" class="list"></div>
+      </div>
+    </div>
+  </div>
 
-    // Inverse: given multiplier m, return t such that multiplierAt(t)=m
-    function timeForMultiplier(m, a, p, r){
-      if (m <= 2){
-        // solve 1 + (t/a)^p = m --> t = a * (m-1)^(1/p)
-        return a * Math.pow(Math.max(0, m - 1), 1 / p);
-      } else {
-        // m = 2 * exp(r*(t-a)) --> t = a + ln(m/2)/r
-        return a + Math.log(m / 2) / r;
-      }
-    }
+  <div class="toast" id="toast"></div>
 
-    // crash sampling (heavy-tail) — outputs multiplier >=1
-    function sampleCrashMultiplier(){
-      // Pareto-like via inverse CDF
-      // P(M > x) ~ x^{-alpha}  =>  sample: x = u^{-1/alpha}
-      const alpha = 1.4; // tail shape (lower -> heavier tail)
-      const u = Math.random();
-      const x = Math.pow(1 / (1 - u), 1 / alpha);
-      // floor min 1.02 for visible action
-      return Math.max(1.01, x);
-    }
+<script>
+// Utilities
+const $ = id => document.getElementById(id);
+function money(v){ return '₴' + (Number(v)||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+let balance = 1000; function setBalance(v){ balance = Number(v); $('balance').textContent = money(balance); }
+setBalance(balance);
+function toast(msg, time=1700){ const t=$('toast'); t.textContent = msg; t.style.display='block'; clearTimeout(t._to); t._to=setTimeout(()=> t.style.display='none', time); }
+function pushHistory(text, change, game='System'){ const el=document.createElement('div'); el.className='row'; el.innerHTML=`<div style="flex:1"><strong>${game}</strong><div class="small">${text}</div></div><div>${change>0?'+':''}${money(change)}</div>`; $('history').prepend(el); }
 
-    function startRound(){
-      if (running) return;
-      cashedOut = false;
-      running = true;
-      startTime = performance.now();
-      // read tuning params
-      const a = parseFloat(timeTo2Input.value) || 6;
-      const p = parseFloat(exponentInput.value) || 2;
-      const r = parseFloat(postRateInput.value) || 0.18;
+// Audio small set
+const AudioCtx = window.AudioContext || window.webkitAudioContext; const audioCtx = new AudioCtx(); function playTone(freq,dur=0.12, type='sine', vol=0.06){ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type=type; o.frequency.value=freq; g.gain.value=vol; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur); o.stop(audioCtx.currentTime+dur+0.02); }
+function soundStart(){ playTone(520,0.08); playTone(760,0.12); }
+function soundCrash(){ playTone(110,0.18,'sawtooth',0.12); }
+function soundCash(){ playTone(1200,0.06,'triangle',0.06); }
+function soundBig(){ playTone(1600,0.16,'sine',0.09); }
 
-      crashMultiplier = sampleCrashMultiplier();
-      // map multiplier to crash time using inverse growth
-      crashTime = timeForMultiplier(crashMultiplier, a, p, r);
+// --- Canvas setup ---
+const ribbon = $('ribbon'); const rctx = ribbon.getContext('2d');
+const bgStars = $('bgStars'); const sctx = bgStars.getContext('2d');
+const uiCanvas = $('ui'); const uctx = uiCanvas.getContext('2d');
+function resizeAll(){ [ribbon,bgStars,uiCanvas].forEach(c=>{ const r=c.getBoundingClientRect(); const d = devicePixelRatio || 1; c.width = Math.floor(r.width * d); c.height = Math.floor(r.height * d); c.style.width = r.width + 'px'; c.style.height = r.height + 'px'; c.getContext('2d').setTransform(d,0,0,d,0,0); }); drawStars(); } window.addEventListener('resize', resizeAll); resizeAll();
 
-      statusEl.textContent = 'У повітрі...';
-      startBtn.disabled = true;
-      cashBtn.disabled = false;
-      cashBtn.classList.remove('ghost');
-      multEl.textContent = '1.00×';
-      planeWrap.style.transform = 'translate(-50%, 0)';
+// Stars background
+let stars=[]; function drawStars(){ const w=bgStars.width/(devicePixelRatio||1), h=bgStars.height/(devicePixelRatio||1); sctx.clearRect(0,0,w,h); stars=[]; for(let i=0;i<140;i++){ stars.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.6,a:0.2+Math.random()*0.9}); } for(const st of stars){ sctx.globalAlpha = st.a; sctx.beginPath(); sctx.arc(st.x,st.y,st.r,0,Math.PI*2); sctx.fillStyle = '#8feaff'; sctx.fill(); } sctx.globalAlpha=1; }
 
-      rafId = requestAnimationFrame(function tick(now){
-        const t = (now - startTime) / 1000; // seconds
-        const currentMult = multiplierAt(t, a, p, r);
-        multEl.textContent = formatMult(currentMult);
+// Confetti simple
+function spawnConfetti(n=120){ const w=ribbon.width/(devicePixelRatio||1), h=ribbon.height/(devicePixelRatio||1); const parts=[]; for(let i=0;i<n;i++){ parts.push({x:Math.random()*w, y:-Math.random()*h*0.6, vx:(Math.random()-0.5)*6, vy:2+Math.random()*6, size:4+Math.random()*6, color:['#FFDD6E','#FF6B6B','#6EF2FF','#9EF5C4'][Math.floor(Math.random()*4)], rot:Math.random()*360, dr:Math.random()*10}); } let t0=performance.now(); function loop(now){ const dt=(now-t0)/1000; t0=now; uctx.clearRect(0,0,uiCanvas.width/(devicePixelRatio||1), uiCanvas.height/(devicePixelRatio||1)); for(const p of parts){ p.x += p.vx; p.y += p.vy; p.vy += 0.12; uctx.save(); uctx.translate(p.x,p.y); uctx.rotate(p.rot*Math.PI/180); uctx.fillStyle=p.color; uctx.fillRect(-p.size/2,-p.size/2,p.size,p.size); uctx.restore(); } const remaining = parts.filter(p=>p.y < ribbon.height/(devicePixelRatio||1)+50); if(remaining.length>0) requestAnimationFrame(loop); else uctx.clearRect(0,0,uiCanvas.width/(devicePixelRatio||1), uiCanvas.height/(devicePixelRatio||1)); } requestAnimationFrame(loop); }
 
-        // plane vertical position based on progress fraction
-        const progress = Math.min(1, t / crashTime);
-        const y = -(progress * 86); // percent
-        planeWrap.style.transform = `translate(-50%, ${y}%)`;
+// --- Ribbon / Aviator logic ---
+const state = { running:false, t:0, last:null, points:[{t:0,m:1}], target:null, round:0, pending:[], locked:[], recent:[], countdown:10 };
 
-        // auto cashout
-        const autoVal = parseFloat(autoInput.value);
-        if (!isNaN(autoVal) && !cashedOut && currentMult >= autoVal){
-          cashOut(currentMult);
-          return;
-        }
+// Sample crash with higher chance for larger x and occasional 1000x
+function sampleCrash(){ const r=Math.random(); if(r < 0.45){ return 1.01 + Math.pow(Math.random(),1.2)*2.0; } // common small
+  if(r < 0.78){ return 1.3 + Math.pow(Math.random(),0.9)*6.7; } // medium
+  if(r < 0.96){ return 5 + Math.pow(Math.random(),0.7)*195; } // big
+  // rare mega including 1000x sometimes
+  return 400 + Math.random()*1600; }
 
-        if (t >= crashTime){
-          // crash
-          multEl.textContent = formatMult(crashMultiplier);
-          endRound(true);
-          return;
-        }
+function growth(t){ // tuned growth: slow start then accelerate
+  return Math.exp(0.016 * t + 0.026 * t * t); }
 
-        rafId = requestAnimationFrame(tick);
-      });
-    }
+// kickoff / countdown
+let countdownStart = null; let countdownDur = 10; function startCountdown(sec=10){ countdownDur = sec; countdownStart = performance.now(); function tick(now){ const elapsed=(now - countdownStart)/1000; const left = Math.max(0, Math.ceil(sec - elapsed)); $('countdown').textContent = `Next in ${left}s`; if(left<=0){ beginRound(); return; } requestAnimationFrame(tick); } requestAnimationFrame(tick); }
 
-    function endRound(crashed){
-      running = false;
-      cancelAnimationFrame(rafId);
-      startBtn.disabled = false;
-      cashBtn.disabled = true;
-      cashBtn.classList.add('ghost');
-      if (crashed){
-        statusEl.textContent = 'CRASH!';
-        multEl.style.color = '#ff6b6b';
-        addHistory(crashMultiplier, false);
-      } else {
-        statusEl.textContent = 'Виведено!';
-        multEl.style.color = 'var(--accent)';
-      }
-      setTimeout(()=>{ multEl.style.color = 'var(--accent)'; }, 800);
-    }
+function beginRound(){ if(audioCtx.state === 'suspended') audioCtx.resume(); state.round++; state.target = sampleCrash(); state.running = true; state.t = 0; state.last = null; state.points = [{t:0,m:1}]; const placed = state.pending.reduce((s,b)=>s+b.amount,0); state.locked = state.locked.concat(state.pending.map(b=>Object.assign({},b))); state.pending = []; if(placed>0){ setBalance(balance - placed); pushHistory(`Round ${state.round}: placed ${money(placed)}`, -placed, 'Aviator'); toast('Round started — gl!'); soundStart(); } $('status').textContent = 'running'; renderLists(); }
 
-    function cashOut(currentMult){
-      if (!running || cashedOut) return;
-      cashedOut = true;
-      cancelAnimationFrame(rafId);
-      const now = performance.now();
-      const t = (now - startTime)/1000;
-      const mult = currentMult || multiplierAt(t, parseFloat(timeTo2Input.value), parseFloat(exponentInput.value), parseFloat(postRateInput.value));
-      const bet = parseFloat(betInput.value) || 0;
-      const win = (bet * mult).toFixed(2);
-      statusEl.textContent = `Виграш ${win}`;
-      addHistory(mult, true, bet, win);
-      endRound(false);
-    }
+function endRound(crash){ const lost = state.locked.reduce((s,b)=>s+b.amount,0); if(lost>0) pushHistory(`Round ${state.round}: crash @ x${crash.toFixed(2)} - lost ${money(lost)}`, -lost, 'Aviator'); state.recent.unshift(crash); if(state.recent.length>30) state.recent.pop(); state.locked = []; renderLists(); renderRecent(); state.running=false; $('status').textContent='crash'; startCountdown(10); soundCrash(); // big celebration for mega
+  if(crash >= 1000){ $('celebrate').style.display='block'; setTimeout(()=> $('celebrate').style.display='none', 3200); spawnConfetti(240); soundBig(); }
+}
 
-    function addHistory(crashMult, cashed, bet=0, win=0){
-      const d = document.createElement('div');
-      d.className = 'round';
-      const crashStr = crashMult.toFixed(2) + '×';
-      if (cashed){
-        d.innerHTML = `Виведено на <b>${crashStr}</b> — ${bet} → ${win}`;
-      } else {
-        d.innerHTML = `<b>CRASH ${crashStr}</b> — програш`;
-      }
-      historyEl.prepend(d);
-      while(historyEl.children.length>12) historyEl.removeChild(historyEl.lastChild);
-    }
+function cashoutOne(i){ if(!state.running) return; if(i<0||i>=state.locked.length) return; const b=state.locked[i]; const cur = state.points[state.points.length-1].m || 1; const payout = b.amount * cur; setBalance(balance + payout); pushHistory(`Cashout ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(payout)}`, payout - b.amount, 'Aviator'); state.locked.splice(i,1); renderLists(); soundCash(); toast(`Cashed ${money(payout)}`); if(payout >= 2000) { spawnConfetti(120); soundBig(); } }
+function cashoutAll(){ if(!state.running) return; const cur = state.points[state.points.length-1].m || 1; let total=0; while(state.locked.length){ const b = state.locked.shift(); const p = b.amount * cur; total += p; pushHistory(`Cashout ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(p)}`, p - b.amount, 'Aviator'); } if(total>0) setBalance(balance + total); renderLists(); soundCash(); toast(`Cashed all ${money(total)}`); if(total >= 3000) { spawnConfetti(160); soundBig(); } }
+function refundQueue(){ const total = state.pending.reduce((s,b)=>s+b.amount,0); if(total>0){ setBalance(balance + total); pushHistory(`Refunded ${money(total)}`, total, 'Aviator'); state.pending = []; renderLists(); toast(`Refunded ${money(total)}`); } }
 
-    function formatMult(m){
-      if (m < 10) return m.toFixed(2) + '×';
-      if (m < 100) return m.toFixed(2) + '×';
-      return m.toFixed(0) + '×';
-    }
+// rendering ribbon (thick smooth band) — simpler approach: thick stroke + glow + subtle offset to simulate ribbon
+function drawRibbon(){ const w = ribbon.width/(devicePixelRatio||1), h = ribbon.height/(devicePixelRatio||1); rctx.clearRect(0,0,w,h); // background slight gradient
+  const lastPoints = state.points; if(!lastPoints || lastPoints.length===0) return; // compute path coordinates
+  const coords = lastPoints.map((p,i)=>({x:mapX(i), y:mapY(p.m)})); // draw ribbon shadow
+  rctx.save(); rctx.lineWidth = 20; rctx.lineCap = 'round'; rctx.strokeStyle = 'rgba(0,0,0,0.18)'; rctx.beginPath(); coords.forEach((pt,i)=> i===0?rctx.moveTo(pt.x,pt.y):rctx.lineTo(pt.x,pt.y)); rctx.stroke(); // main band
+  rctx.lineWidth = 12; const g = rctx.createLinearGradient(0,0,w,0); g.addColorStop(0,'#00e0ff'); g.addColorStop(0.6,'#7afcff'); g.addColorStop(1,'#9ef5c4'); rctx.strokeStyle = g; rctx.beginPath(); coords.forEach((pt,i)=> i===0?rctx.moveTo(pt.x,pt.y):rctx.lineTo(pt.x,pt.y)); rctx.stroke(); // subtle texture: dashed light line
+  rctx.strokeStyle = 'rgba(255,255,255,0.06)'; rctx.setLineDash([6,14]); rctx.lineWidth = 2; rctx.beginPath(); coords.forEach((pt,i)=> i===0?rctx.moveTo(pt.x,pt.y):rctx.lineTo(pt.x,pt.y)); rctx.stroke(); rctx.setLineDash([]); rctx.restore(); // head indicator
+  const last = coords[coords.length-1]; rctx.save(); rctx.beginPath(); rctx.fillStyle = '#ffffff'; rctx.arc(last.x,last.y,6,0,Math.PI*2); rctx.fill(); rctx.restore(); }
 
-    // events
-    startBtn.addEventListener('click', startRound);
-    cashBtn.addEventListener('click', ()=> cashOut());
-    window.addEventListener('keydown', (e)=>{ if (e.code === 'Space') startRound(); if (e.key.toLowerCase()==='c') cashOut(); });
+// mapping helpers
+function mapX(i){ const w = ribbon.width/(devicePixelRatio||1), margin = 70; const maxPoints = Math.max(160, state.points.length); const frac = i/(maxPoints-1 || 1); return margin + frac*(w - margin*2); }
+function mapY(m){ const h = ribbon.height/(devicePixelRatio||1), margin = 60; const cap = Math.max(100, state.target || 1000); const logMax = Math.log10(cap); const lm = Math.log10(Math.max(1,m)); const frac = (lm - 0) / Math.max(1e-6,(logMax-0)); return h - margin - frac*(h - margin*2); }
 
-    // touch double-tap quick cash-out
-    let lastTap = 0;
-    document.getElementById('playArea').addEventListener('touchend', ()=>{ const now = Date.now(); if (now - lastTap < 300) cashOut(); lastTap = now; });
+// draw UI overlays (grid labels)
+function drawUI(){ const w = uiCanvas.width/(devicePixelRatio||1), h = uiCanvas.height/(devicePixelRatio||1); uctx.clearRect(0,0,w,h); // draw left labels
+  uctx.fillStyle = 'rgba(255,255,255,0.05)'; uctx.font = '12px Inter, sans-serif'; [1,2,5,10,20,50,100,200,500,1000].forEach(v=>{ const y = mapY(v); uctx.fillText('x'+v, 12, y+4); }); }
 
-    // init
-    cashBtn.disabled = true;
-    cashBtn.classList.add('ghost');
-  </script>
+// main loop
+function loop(now){ if(!state.last) state.last = now; const dt = (now - state.last)/1000; state.last = now; if(state.running){ state.t += dt; const m = growth(state.t); state.points.push({t:state.t,m:Math.min(m,5000)}); if(state.points.length > 4000) state.points.shift(); const cur = state.points[state.points.length-1].m; $('bigX').textContent = 'x' + cur.toFixed(2); // auto cashouts
+    for(let i=state.locked.length-1;i>=0;i--){ const b = state.locked[i]; if(b.auto && !isNaN(b.auto) && cur >= b.auto){ const payout = b.amount * cur; setBalance(balance + payout); pushHistory(`Auto ${money(b.amount)} @ x${cur.toFixed(2)} -> ${money(payout)}`, payout - b.amount, 'Aviator'); state.locked.splice(i,1); soundCash(); toast(`Auto ${money(payout)}`); } }
+    if(cur >= state.target){ endRound(state.target); state.running=false; }
+  }
+  drawRibbon(); drawUI(); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+
+// UI functions
+function renderLists(){ const q=$('queue'); q.innerHTML=''; if(state.pending.length===0) q.textContent='(empty)'; else state.pending.forEach((b,i)=>{ const d=document.createElement('div'); d.className='row'; d.innerHTML = `<div>${i+1}. ${money(b.amount)} ${b.auto? ' — auto x'+b.auto : ''}</div><div><button class='btn' onclick='editPending(${i})'>Edit</button><button class='btn' onclick='removePending(${i})'>Remove</button></div>`; q.appendChild(d); }); const l=$('locked'); l.innerHTML=''; if(state.locked.length===0) l.textContent='(empty)'; else state.locked.forEach((b,i)=>{ const cur = state.points[state.points.length-1]?.m || 1; const pot = b.amount * cur; const d=document.createElement('div'); d.className='row'; d.innerHTML=`<div>#${i+1} ${money(b.amount)} ${b.auto? ' — auto x'+b.auto : ''} — pot ${money(pot)}</div><div><button class='btn' onclick='cashoutOne(${i})'>Cashout</button></div>`; l.appendChild(d); }); $('onboard').textContent = money(state.pending.reduce((s,b)=>s+b.amount,0) + state.locked.reduce((s,b)=>s+b.amount,0)); $('potential').textContent = money(state.locked.reduce((s,b)=>s + b.amount * (state.points[state.points.length-1]?.m || 1),0)); }
+
+window.removePending = function(i){ if(i<0||i>=state.pending.length) return; state.pending.splice(i,1); renderLists(); }
+window.editPending = function(i){ const b=state.pending[i]; const a=prompt('Edit amount', b.amount); if(a!==null){ const v=Number(a); if(!isNaN(v) && v>0) b.amount=v; } const at = prompt('Auto target x (empty=off)', b.auto||''); if(at!==null){ const t=parseFloat(at); b.auto = isNaN(t)? null : t; } renderLists(); }
+
+// bindings
+$('addToQueue').addEventListener('click', ()=>{ const amt=Number($('betAmt').value)||0; const at=parseFloat($('autoX').value) || null; if(amt<=0){ alert('Enter amount'); return; } if(amt>balance){ alert('Insufficient'); return; } state.pending.push({amount:amt,auto:isNaN(at)? null: at}); renderLists(); toast('Queued'); });
+$('placeNow').addEventListener('click', ()=>{ const total=state.pending.reduce((s,b)=>s+b.amount,0); if(total<=0) return; if(total>balance){ alert('Insufficient'); return; } setBalance(balance - total); state.locked = state.locked.concat(state.pending.map(b=>Object.assign({},b))); state.pending=[]; pushHistory(`Placed ${money(total)}`,-total,'Aviator'); renderLists(); toast('Placed'); });
+$('startNow').addEventListener('click', ()=>{ if(state.running) return; beginRound(); });
+$('cashoutAll').addEventListener('click', ()=>{ cashoutAll(); });
+$('addFunds').addEventListener('click', ()=>{ setBalance(balance + 1000); pushHistory('Added +₴1000',1000,'System'); toast('Added ₴1000'); });
+
+function renderRecent(){ const box=$('recent'); box.innerHTML=''; state.recent.forEach(v=>{ const el=document.createElement('div'); el.className='pill'; el.textContent = Number(v).toFixed(2); if(v>=1.5) el.style.background = 'linear-gradient(90deg,var(--good),#9ef5c4)'; else el.style.background = 'linear-gradient(90deg,var(--bad),#ff9a9a)'; box.appendChild(el); }); }
+
+// initial
+renderLists(); renderRecent(); startCountdown(10); drawStars();
+
+</script>
 </body>
 </html>

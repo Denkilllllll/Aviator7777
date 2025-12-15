@@ -1,0 +1,289 @@
+<!--
+Aviator demo (improved)
+
+How to publish on GitHub Pages quickly:
+1. Create a new GitHub repository (e.g. `aviator-ios-demo`).
+2. Add this `index.html` to the repo root (rename from Aviator_demo_ios.html -> index.html).
+3. Commit & push to `main`.
+4. In repository Settings -> Pages, set Source to `main` branch / root and save.
+5. Your demo will be available at https://<your-username>.github.io/<repo-name>/ (may take a minute).
+
+This single-file demo is optimized for iPhone (viewport/safe-area). It implements the multiplier growth curve you asked:
+ - 1 → 2×: slow, controlled (tuned by `timeTo2` and `exponent`)
+ - after 2×: growth becomes exponential (tuned by `postRate`)
+
+Crash time is sampled from a heavy-tail distribution and mapped to the inverse of the growth curve so that the plane "crashes" at the sampled multiplier.
+-->
+
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Aviator — iPhone demo (smooth accelerate)</title>
+  <meta name="description" content="Авіатор демо: повільний ріст 1→2×, потім поступове прискорення. Готово для GitHub Pages." />
+  <style>
+    :root{--bg1:#021021;--bg2:#001022;--accent:#ffcf6b;--accent2:#ff6b9a;--card:#071426;--glass:rgba(255,255,255,0.03);--safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom)}
+    html,body{height:100%;margin:0;font-family:Inter, -apple-system, system-ui, "Helvetica Neue", Arial;color:#e6f3ff;background:linear-gradient(180deg,var(--bg1),var(--bg2));-webkit-font-smoothing:antialiased}
+    .app{max-width:420px;margin:0 auto;padding:calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bottom));box-sizing:border-box}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .logo{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),var(--accent2));font-weight:700;color:#021021}
+    h1{font-size:18px;margin:0}
+    .muted{font-size:13px;color:#bcd6f5;opacity:0.8}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:12px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+
+    .play-area{position:relative;height:360px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#021428 0%, #001018 100%);margin-bottom:12px;border:1px solid rgba(255,255,255,0.03)}
+    .grid{position:absolute;inset:0;background-image:linear-gradient(transparent 82%, rgba(255,255,255,0.02) 82%),linear-gradient(90deg, transparent 82%, rgba(255,255,255,0.01) 82%);background-size:100% 44px,44px 100%;pointer-events:none}
+    .mult{position:absolute;top:14px;left:14px;font-weight:800;font-size:26px;color:var(--accent)}
+    .status{position:absolute;top:14px;right:14px;background:var(--glass);padding:6px 10px;border-radius:999px;font-size:13px;color:#d9eefc}
+
+    .plane-wrap{position:absolute;left:50%;bottom:12px;transform:translate(-50%, 0);will-change:transform}
+    .plane{width:86px;height:56px;filter:drop-shadow(0 8px 14px rgba(0,0,0,0.6))}
+
+    .controls{display:flex;gap:10px;margin-top:10px}
+    input[type=number],input[type=text],select{width:100%;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;font-size:15px}
+    label{display:block;font-size:12px;color:#9fb1d4;margin-bottom:6px}
+
+    .row{display:flex;gap:8px}
+    .btn{flex:1;padding:12px;border-radius:12px;border:none;font-weight:800;font-size:16px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#031226}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#cfe6ff}
+
+    .small{font-size:13px;color:#bcd6f5}
+    .history{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+    .round{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.02);font-size:13px}
+
+    footer{margin-top:10px;text-align:center;font-size:12px;color:#9fb1d4}
+
+    @media (max-width:420px){.play-area{height:300px}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">AV</div>
+      <div>
+        <h1>Aviator — iPhone (smooth accel)</h1>
+        <div class="muted">1→2× повільно, після 2× — все швидше. Готово для GitHub Pages.</div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="play-area" id="playArea">
+        <div class="grid"></div>
+        <div class="mult" id="mult">1.00×</div>
+        <div class="status" id="status">Готово</div>
+        <div class="plane-wrap" id="planeWrap">
+          <!-- plane SVG -->
+          <svg class="plane" viewBox="0 0 64 42" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 20c0 0 18-3 38-3s22 3 22 3l2-3-10-6-8 2-8-6-18 6-20 7z" fill="#fff" opacity="0.98" />
+            <path d="M10 26c0 0 18 6 44 6l-10-6-8 2-8-6-18 6-0 0z" fill="#ffd9b3" opacity="0.95"/>
+          </svg>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <div style="flex:1">
+          <label>Ставка (demo)</label>
+          <input id="bet" type="number" inputmode="numeric" value="100" min="1">
+        </div>
+        <div style="width:140px">
+          <label>Автокеш-аут (×)</label>
+          <input id="autoCash" type="text" placeholder="2.5">
+        </div>
+      </div>
+
+      <div class="controls">
+        <div style="flex:1;">
+          <label>Налаштування рісту (1→2 і далі)</label>
+          <div style="display:flex;gap:8px">
+            <input id="timeTo2" type="number" value="6" min="0.5" step="0.5" title="секунди до 2×">
+            <input id="exponent" type="number" value="2" min="1" max="5" step="0.1" title="вигин: >1 — повільніше спочатку">
+            <input id="postRate" type="number" value="0.18" min="0.02" step="0.01" title="експонентний темп після 2×">
+          </div>
+          <div class="small">timeTo2 — час, за який множник досягне 2×. exponent — як повільно росте 1→2 (чем більше — тим повільніше спочатку). postRate — швидкість росту після 2×.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button id="startBtn" class="btn">Старт раунду</button>
+        <button id="cashBtn" class="btn ghost">Cash out</button>
+      </div>
+
+      <div class="history" id="history"></div>
+    </div>
+
+    <footer>Демо — не реальні гроші. Для розгортання: додайте index.html в GitHub repo і увімкніть Pages.</footer>
+  </div>
+
+  <script>
+    // --- core parameters & UI
+    const startBtn = document.getElementById('startBtn');
+    const cashBtn = document.getElementById('cashBtn');
+    const multEl = document.getElementById('mult');
+    const statusEl = document.getElementById('status');
+    const planeWrap = document.getElementById('planeWrap');
+    const historyEl = document.getElementById('history');
+    const betInput = document.getElementById('bet');
+    const autoInput = document.getElementById('autoCash');
+
+    const timeTo2Input = document.getElementById('timeTo2');
+    const exponentInput = document.getElementById('exponent');
+    const postRateInput = document.getElementById('postRate');
+
+    let running = false;
+    let startTime = 0;
+    let rafId = null;
+    let crashMultiplier = 1;
+    let crashTime = 0;
+    let cashedOut = false;
+
+    // --- growth curve functions
+    // piecewise multiplier m(t):
+    // if t <= a: m = 1 + (t/a)^p
+    // else: m = 2 * exp(r * (t - a))
+
+    function multiplierAt(t, a, p, r){
+      if (t <= a){
+        return 1 + Math.pow(t / a, p);
+      } else {
+        return 2 * Math.exp(r * (t - a));
+      }
+    }
+
+    // Inverse: given multiplier m, return t such that multiplierAt(t)=m
+    function timeForMultiplier(m, a, p, r){
+      if (m <= 2){
+        // solve 1 + (t/a)^p = m --> t = a * (m-1)^(1/p)
+        return a * Math.pow(Math.max(0, m - 1), 1 / p);
+      } else {
+        // m = 2 * exp(r*(t-a)) --> t = a + ln(m/2)/r
+        return a + Math.log(m / 2) / r;
+      }
+    }
+
+    // crash sampling (heavy-tail) — outputs multiplier >=1
+    function sampleCrashMultiplier(){
+      // Pareto-like via inverse CDF
+      // P(M > x) ~ x^{-alpha}  =>  sample: x = u^{-1/alpha}
+      const alpha = 1.4; // tail shape (lower -> heavier tail)
+      const u = Math.random();
+      const x = Math.pow(1 / (1 - u), 1 / alpha);
+      // floor min 1.02 for visible action
+      return Math.max(1.01, x);
+    }
+
+    function startRound(){
+      if (running) return;
+      cashedOut = false;
+      running = true;
+      startTime = performance.now();
+      // read tuning params
+      const a = parseFloat(timeTo2Input.value) || 6;
+      const p = parseFloat(exponentInput.value) || 2;
+      const r = parseFloat(postRateInput.value) || 0.18;
+
+      crashMultiplier = sampleCrashMultiplier();
+      // map multiplier to crash time using inverse growth
+      crashTime = timeForMultiplier(crashMultiplier, a, p, r);
+
+      statusEl.textContent = 'У повітрі...';
+      startBtn.disabled = true;
+      cashBtn.disabled = false;
+      cashBtn.classList.remove('ghost');
+      multEl.textContent = '1.00×';
+      planeWrap.style.transform = 'translate(-50%, 0)';
+
+      rafId = requestAnimationFrame(function tick(now){
+        const t = (now - startTime) / 1000; // seconds
+        const currentMult = multiplierAt(t, a, p, r);
+        multEl.textContent = formatMult(currentMult);
+
+        // plane vertical position based on progress fraction
+        const progress = Math.min(1, t / crashTime);
+        const y = -(progress * 86); // percent
+        planeWrap.style.transform = `translate(-50%, ${y}%)`;
+
+        // auto cashout
+        const autoVal = parseFloat(autoInput.value);
+        if (!isNaN(autoVal) && !cashedOut && currentMult >= autoVal){
+          cashOut(currentMult);
+          return;
+        }
+
+        if (t >= crashTime){
+          // crash
+          multEl.textContent = formatMult(crashMultiplier);
+          endRound(true);
+          return;
+        }
+
+        rafId = requestAnimationFrame(tick);
+      });
+    }
+
+    function endRound(crashed){
+      running = false;
+      cancelAnimationFrame(rafId);
+      startBtn.disabled = false;
+      cashBtn.disabled = true;
+      cashBtn.classList.add('ghost');
+      if (crashed){
+        statusEl.textContent = 'CRASH!';
+        multEl.style.color = '#ff6b6b';
+        addHistory(crashMultiplier, false);
+      } else {
+        statusEl.textContent = 'Виведено!';
+        multEl.style.color = 'var(--accent)';
+      }
+      setTimeout(()=>{ multEl.style.color = 'var(--accent)'; }, 800);
+    }
+
+    function cashOut(currentMult){
+      if (!running || cashedOut) return;
+      cashedOut = true;
+      cancelAnimationFrame(rafId);
+      const now = performance.now();
+      const t = (now - startTime)/1000;
+      const mult = currentMult || multiplierAt(t, parseFloat(timeTo2Input.value), parseFloat(exponentInput.value), parseFloat(postRateInput.value));
+      const bet = parseFloat(betInput.value) || 0;
+      const win = (bet * mult).toFixed(2);
+      statusEl.textContent = `Виграш ${win}`;
+      addHistory(mult, true, bet, win);
+      endRound(false);
+    }
+
+    function addHistory(crashMult, cashed, bet=0, win=0){
+      const d = document.createElement('div');
+      d.className = 'round';
+      const crashStr = crashMult.toFixed(2) + '×';
+      if (cashed){
+        d.innerHTML = `Виведено на <b>${crashStr}</b> — ${bet} → ${win}`;
+      } else {
+        d.innerHTML = `<b>CRASH ${crashStr}</b> — програш`;
+      }
+      historyEl.prepend(d);
+      while(historyEl.children.length>12) historyEl.removeChild(historyEl.lastChild);
+    }
+
+    function formatMult(m){
+      if (m < 10) return m.toFixed(2) + '×';
+      if (m < 100) return m.toFixed(2) + '×';
+      return m.toFixed(0) + '×';
+    }
+
+    // events
+    startBtn.addEventListener('click', startRound);
+    cashBtn.addEventListener('click', ()=> cashOut());
+    window.addEventListener('keydown', (e)=>{ if (e.code === 'Space') startRound(); if (e.key.toLowerCase()==='c') cashOut(); });
+
+    // touch double-tap quick cash-out
+    let lastTap = 0;
+    document.getElementById('playArea').addEventListener('touchend', ()=>{ const now = Date.now(); if (now - lastTap < 300) cashOut(); lastTap = now; });
+
+    // init
+    cashBtn.disabled = true;
+    cashBtn.classList.add('ghost');
+  </script>
+</body>
+</html>
